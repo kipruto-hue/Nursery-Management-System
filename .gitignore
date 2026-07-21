@@ -1,0 +1,7 @@
+# Real database credentials — copy config.sample.php to config.php on each machine
+public_html/includes/config.php
+
+# Nightly database dumps
+backups/
+
+*.log

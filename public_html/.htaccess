@@ -1,0 +1,14 @@
+# Block direct access to code and data folders
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^includes/ - [F,L]
+RewriteRule ^sql/ - [F,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set Referrer-Policy "same-origin"
+</IfModule>
+
+Options -Indexes
