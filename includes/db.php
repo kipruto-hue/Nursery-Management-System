@@ -8,12 +8,30 @@ require_once is_file(__DIR__ . '/config.php')
 function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
-        $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4';
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+        // DB_PORT / DB_SSL only exist in config.env.php. A local config.php
+        // predates them, so fall back rather than fataling on an undefined
+        // constant.
+        $port = defined('DB_PORT') ? DB_PORT : 3306;
+        $dsn = 'mysql:host=' . DB_HOST . ';port=' . $port
+             . ';dbname=' . DB_NAME . ';charset=utf8mb4';
+
+        $options = [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
-        ]);
+        ];
+
+        if (defined('DB_SSL') && DB_SSL) {
+            if (defined('DB_SSL_CA') && DB_SSL_CA !== '') {
+                $options[PDO::MYSQL_ATTR_SSL_CA] = DB_SSL_CA;
+            } else {
+                // Encrypted, but the certificate is not verified. Acceptable
+                // only for a short-lived demo; supply DB_SSL_CA otherwise.
+                $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+            }
+        }
+
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
     }
     return $pdo;
 }

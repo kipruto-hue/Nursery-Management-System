@@ -16,6 +16,17 @@ define('DB_NAME', getenv('DB_NAME') ?: '');
 define('DB_USER', getenv('DB_USER') ?: '');
 define('DB_PASS', getenv('DB_PASS') ?: '');
 
+// Managed MySQL providers (Railway, Aiven, TiDB) hand out a non-standard port,
+// so this cannot be assumed to be 3306.
+define('DB_PORT', (int)(getenv('DB_PORT') ?: 3306));
+
+// Some providers require TLS. Set DB_SSL=1 to enable it; point DB_SSL_CA at a
+// bundled CA file to verify the certificate properly. Without a CA the
+// connection is still encrypted but the certificate is not verified, which is
+// acceptable only for a short-lived demo.
+define('DB_SSL', (bool)(getenv('DB_SSL') ?: false));
+define('DB_SSL_CA', getenv('DB_SSL_CA') ?: '');
+
 // 'production' hides error details from visitors; 'development' shows them.
 define('APP_ENV', getenv('APP_ENV') ?: 'production');
 
