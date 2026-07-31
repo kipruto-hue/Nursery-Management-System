@@ -96,6 +96,14 @@ function csrf_token(): string {
 
 /** Call at the top of every state-changing API endpoint. */
 function require_csrf(): void {
+    // An unreachable session store is indistinguishable from an expired
+    // session -- nothing persists, so the token issued with the page is gone by
+    // the time the form is submitted. Report that plainly instead of sending
+    // the user round a refresh loop that can never succeed.
+    if (class_exists('DbSessionHandler') && DbSessionHandler::$failed) {
+        json_fail('The database is not reachable, so nothing can be saved yet. '
+            . 'Check the deployment configuration.', 503);
+    }
     $sent = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     if (empty($_SESSION['csrf']) || !hash_equals($_SESSION['csrf'], $sent)) {
         json_fail('Your session expired. Please refresh the page and try again.', 403);

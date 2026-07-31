@@ -21,6 +21,16 @@ require_once __DIR__ . '/db.php';
  */
 final class DbSessionHandler implements SessionHandlerInterface
 {
+    /**
+     * Set when the session store could not be reached.
+     *
+     * Without this, an unreachable database looks exactly like an expired
+     * session: nothing persists, so the CSRF token issued with the login page
+     * is gone by the time the form is submitted, and the user is told to
+     * refresh forever. Callers use this to report the real cause.
+     */
+    public static bool $failed = false;
+
     public function open(string $path, string $name): bool
     {
         return true;
@@ -38,6 +48,7 @@ final class DbSessionHandler implements SessionHandlerInterface
             $stmt->execute([$id]);
             $data = $stmt->fetchColumn();
         } catch (Throwable $ex) {
+            self::$failed = true;
             error_log('session read failed: ' . $ex->getMessage());
             return '';
         }
@@ -53,6 +64,7 @@ final class DbSessionHandler implements SessionHandlerInterface
                                          last_activity = VALUES(last_activity)'
             )->execute([$id, $data, time()]);
         } catch (Throwable $ex) {
+            self::$failed = true;
             error_log('session write failed: ' . $ex->getMessage());
             return false;
         }
