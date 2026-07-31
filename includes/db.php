@@ -1,5 +1,9 @@
 <?php
-require_once __DIR__ . '/config.php';
+// Local development uses config.php (gitignored, holds real credentials).
+// Hosted deployments have no such file and fall back to environment variables.
+require_once is_file(__DIR__ . '/config.php')
+    ? __DIR__ . '/config.php'
+    : __DIR__ . '/config.env.php';
 
 function db(): PDO {
     static $pdo = null;
