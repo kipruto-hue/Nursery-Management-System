@@ -1,9 +1,9 @@
 # Now that the app sits at the repo root, everything here is web-reachable.
 # Keep non-runtime files out of the deployment entirely.
 
-# Schema and demo seed are CLI-only. schema.sql does not end in .php, so it
-# would NOT be caught by Vercel's .php firewall and would be publicly readable.
-sql/
+# sql/ now ships, because api/setup.php reads schema.sql and seed.php to
+# initialise the database over HTTP (Vercel gives no shell). It is not
+# web-reachable: vercel.json returns 404 for /sql/ and for every .php path.
 
 # Apache-only; Vercel uses vercel.json instead.
 .htaccess

@@ -4,7 +4,16 @@ require_once __DIR__ . '/helpers.php';
 
 // ---- Session bootstrap: secure cookie flags, 12h lifetime (§2, §6.1) ----
 if (session_status() === PHP_SESSION_NONE) {
-    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    // Store sessions in the database. Serverless instances have no shared or
+    // persistent disk, so the default file sessions vanish when an instance is
+    // recycled and the user is silently logged out.
+    require_once __DIR__ . '/session_db.php';
+    session_set_save_handler(new DbSessionHandler(), true);
+
+    // Behind Vercel's proxy $_SERVER['HTTPS'] is unset even on HTTPS, so the
+    // cookie would never be marked secure. Trust the forwarded protocol too.
+    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
     session_set_cookie_params([
         'lifetime' => 0,               // session cookie; server enforces 12h below
         'path'     => '/',

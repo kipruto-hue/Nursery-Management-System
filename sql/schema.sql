@@ -5,6 +5,7 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS activity_log;
 DROP TABLE IF EXISTS login_attempts;
 DROP TABLE IF EXISTS settings;
@@ -240,6 +241,16 @@ CREATE TABLE activity_log (
   KEY ix_activity_time (created_at),
   KEY ix_activity_entity (entity, entity_id),
   CONSTRAINT fk_activity_user FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Session storage. Serverless instances share no filesystem and are recycled
+-- when idle, so PHP's default file sessions log users out unpredictably.
+-- Harmless on Apache/Hostinger, which uses the same handler.
+CREATE TABLE sessions (
+  id            VARCHAR(128) NOT NULL PRIMARY KEY,
+  data          MEDIUMBLOB   NOT NULL,
+  last_activity INT UNSIGNED NOT NULL,
+  KEY ix_sessions_activity (last_activity)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO settings (k, v) VALUES ('nursery_name', 'My Nursery');

@@ -2,7 +2,9 @@
 // Demo seed data (§9.5). Run from the command line: php sql/seed.php
 // Re-runnable: clears all data first.
 
-if (PHP_SAPI !== 'cli') {
+// CLI only, with one sanctioned exception: api/setup.php defines SEED_VIA_SETUP
+// because the hosted demo has no shell to run this from.
+if (PHP_SAPI !== 'cli' && !defined('SEED_VIA_SETUP')) {
     die("Run this from the command line only.\n");
 }
 
