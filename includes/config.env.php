@@ -27,6 +27,10 @@ define('DB_PORT', (int)(getenv('DB_PORT') ?: 3306));
 define('DB_SSL', (bool)(getenv('DB_SSL') ?: false));
 define('DB_SSL_CA', getenv('DB_SSL_CA') ?: '');
 
+// Force the no-database demo mode even when a database is configured.
+// Normally unnecessary: with no DB_NAME set, demo mode engages on its own.
+define('DEMO_MODE', (bool)(getenv('DEMO_MODE') ?: false));
+
 // 'production' hides error details from visitors; 'development' shows them.
 define('APP_ENV', getenv('APP_ENV') ?: 'production');
 
