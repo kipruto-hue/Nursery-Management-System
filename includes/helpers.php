@@ -5,9 +5,25 @@ require_once __DIR__ . '/db.php';
 if (APP_ENV === 'production') {
     ini_set('display_errors', '0');
     error_reporting(E_ALL & ~E_DEPRECATED);
+
+    // Buffer the page so a failure midway through rendering can discard the
+    // partial output. Without this the handler below appended a second, whole
+    // HTML document to whatever had already been printed -- which is how a
+    // <!DOCTYPE html> ended up inside the login page's <title>.
+    ob_start();
+
     set_exception_handler(function ($ex) {
         error_log($ex);
-        $isApi = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/api/');
+        // IS_API_REQUEST is set by the Vercel front controller, which knows the
+        // real route. SCRIPT_NAME is useless there: every request, page or API,
+        // runs through /api/index.php, so page errors would answer with JSON.
+        $isApi = defined('IS_API_REQUEST')
+            ? IS_API_REQUEST
+            : str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/api/');
+        // Throw away anything already rendered so the error page stands alone.
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
         http_response_code(500);
         if ($isApi) {
             header('Content-Type: application/json; charset=utf-8');
@@ -122,11 +138,23 @@ function generate_batch_code(int $speciesId): string {
     return sprintf('%s-%s-%03d', $prefix, $year, $next);
 }
 
-/** Read an app setting (nursery name etc.). */
+/**
+ * Read an app setting (nursery name etc.).
+ *
+ * This only ever supplies display chrome -- page titles and the header -- and
+ * it is called before anything else on every page, including the login screen.
+ * A database that is unreachable or not yet imported must therefore not take
+ * the page down with it: fall back to the caller's default and log the reason.
+ */
 function setting(string $key, string $default = ''): string {
-    $stmt = db()->prepare('SELECT v FROM settings WHERE k = ?');
-    $stmt->execute([$key]);
-    $v = $stmt->fetchColumn();
+    try {
+        $stmt = db()->prepare('SELECT v FROM settings WHERE k = ?');
+        $stmt->execute([$key]);
+        $v = $stmt->fetchColumn();
+    } catch (Throwable $ex) {
+        error_log('setting(' . $key . ') failed: ' . $ex->getMessage());
+        return $default;
+    }
     return $v === false || $v === null ? $default : $v;
 }
 

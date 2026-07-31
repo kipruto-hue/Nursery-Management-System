@@ -13,6 +13,9 @@ if (preg_match('#^/(includes|sql|backups)/#', $path) || $path === '/cron.php') {
 // links to /app/foo and /api/foo with no extension.
 if (preg_match('#^/(app|api)/([a-z0-9-]+)$#', $path, $m)) {
     $target = __DIR__ . '/' . $m[1] . '/' . $m[2] . '.php';
+    // Match the Vercel front controller so the error handler behaves the same
+    // locally as it does in production.
+    define('IS_API_REQUEST', $m[1] === 'api');
     if (is_file($target)) {
         require $target;
         return true;

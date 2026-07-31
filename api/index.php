@@ -31,6 +31,11 @@ unset($_GET['__r'], $_REQUEST['__r']);
 
 $route = trim($route, '/');
 
+// Everything runs through this one file, so SCRIPT_NAME can no longer tell an
+// API call from a page. Record it here, while the real route is still known,
+// for the error handler in includes/helpers.php.
+define('IS_API_REQUEST', str_starts_with($route, 'api/'));
+
 if ($route === '' || $route === 'index') {
     $file = dirname(__DIR__) . '/index.php';
 } elseif (preg_match('#^(app|api)/([a-z0-9-]+)$#', $route, $m)) {
