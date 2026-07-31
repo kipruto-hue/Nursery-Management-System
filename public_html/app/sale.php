@@ -128,6 +128,8 @@ page_top('Sale #' . $sale['id']);
 
 <script>
 const SALE_ID = <?= (int)$sale['id'] ?>;
+// app.js is loaded by page_bottom() below this block, so wait for it (§ same as password.php)
+document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('copy-receipt').addEventListener('click', async () => {
   await navigator.clipboard.writeText(document.getElementById('receipt-text').textContent);
   toast('Receipt copied. Paste it anywhere.');
@@ -156,5 +158,6 @@ delBtn?.addEventListener('click', busy(delBtn, async () => {
   await apiPost('/api/sales.php', { action: 'delete', id: SALE_ID });
   location.href = '/app/sales.php';
 }));
+});
 </script>
 <?php page_bottom('sales'); ?>
