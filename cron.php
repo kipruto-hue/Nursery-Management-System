@@ -9,7 +9,7 @@ if (PHP_SAPI !== 'cli') {
     die('Run from cron only.');
 }
 
-require_once __DIR__ . '/public_html/includes/config.php';
+require_once __DIR__ . '/includes/config.php';
 
 $backupDir = __DIR__ . '/backups';
 if (!is_dir($backupDir) && !mkdir($backupDir, 0700, true)) {

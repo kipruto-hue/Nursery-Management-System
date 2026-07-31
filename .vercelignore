@@ -1,0 +1,19 @@
+# Now that the app sits at the repo root, everything here is web-reachable.
+# Keep non-runtime files out of the deployment entirely.
+
+# Schema and demo seed are CLI-only. schema.sql does not end in .php, so it
+# would NOT be caught by Vercel's .php firewall and would be publicly readable.
+sql/
+
+# Apache-only; Vercel uses vercel.json instead.
+.htaccess
+
+# Dev-only router for `php -S`.
+router.php
+
+# Nightly backup job: needs mysqldump and a writable disk, neither of which
+# exists on Vercel.
+cron.php
+
+backups/
+*.log

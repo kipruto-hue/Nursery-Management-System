@@ -1,0 +1,27 @@
+# Block direct access to code and data folders. The app now sits at the docroot
+# (it used to live under public_html/), so cron.php and backups/ are reachable
+# from the web and have to be denied explicitly.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^includes/ - [F,L]
+RewriteRule ^sql/ - [F,L]
+RewriteRule ^backups/ - [F,L]
+RewriteRule ^cron\.php$ - [F,L]
+
+# Clean URLs. The app links to /app/foo and /api/foo with no extension, because
+# Vercel's firewall denies any URL ending in .php before routing ever happens.
+# Apache maps those back to the real files here, so one set of URLs works on
+# both hosts.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(app|api)/([a-z0-9-]+)$ $1/$2.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set Referrer-Policy "same-origin"
+</IfModule>
+
+DirectoryIndex index.php
+Options -Indexes
