@@ -1,21 +1,12 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/_router.php": { "runtime": "vercel-php@0.9.0" }
-  },
-  "rewrites": [
-    { "source": "/", "destination": "/api/_router.php?__r=index" },
-    { "source": "/app/:page", "destination": "/api/_router.php?__r=app/:page" },
-    { "source": "/api/:endpoint", "destination": "/api/_router.php?__r=api/:endpoint" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "same-origin" }
-      ]
+    "api/*.php": {
+      "runtime": "vercel-php@0.9.0",
+      "includeFiles": "**"
     }
+  },
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/api/index.php" }
   ]
 }

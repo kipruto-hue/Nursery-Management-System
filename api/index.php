@@ -3,17 +3,25 @@
  * Front controller (Vercel only).
  *
  * Vercel's firewall rejects any URL ending in ".php" with 403 before routing
- * ever happens -- a request for /api/login.php never reaches a function, even
- * when one is registered there. The firewall inspects the *incoming* URL and
- * not the rewrite target, so the browser must never see a ".php" URL.
+ * happens -- a request for /api/login.php never reaches a function, even when
+ * one is registered there. The firewall inspects the *incoming* URL and not the
+ * rewrite target, so the browser must never see a ".php" URL.
  *
- * vercel.json rewrites clean URLs (/, /app/foo, /api/foo) here, and this
- * dispatches to the real file. Apache does the same job via .htaccess, so a
- * single set of clean URLs works on both hosts.
+ * vercel.json sends anything that is not a real static file here, and this
+ * dispatches to the actual page. Apache does the same job via .htaccess, so one
+ * set of clean URLs works on both hosts.
+ *
+ * Named index.php rather than _router.php: Vercel skips underscore-prefixed
+ * files when detecting functions, so that name matched nothing and failed the
+ * build.
  */
 
-// Vercel passes the matched path as __r; fall back to REQUEST_URI so the
-// router still works under a catch-all rewrite or a direct include.
+// vercel.json cannot carry a "headers" block alongside "routes", so the
+// security headers that .htaccess sets on Apache are set here instead.
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: SAMEORIGIN');
+header('Referrer-Policy: same-origin');
+
 $route = (string)($_GET['__r'] ?? '');
 if ($route === '') {
     $route = (string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
@@ -29,6 +37,11 @@ if ($route === '' || $route === 'index') {
     // Whitelisted shape only -- no dots, no slashes, so no traversal.
     $file = dirname(__DIR__) . '/' . $m[1] . '/' . $m[2] . '.php';
 } else {
+    $file = null;
+}
+
+// Guard against routing this dispatcher back into itself (/api/index).
+if ($file !== null && realpath($file) === realpath(__FILE__)) {
     $file = null;
 }
 
