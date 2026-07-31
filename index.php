@@ -36,7 +36,23 @@ if (current_user()) {
       <button type="submit" class="btn" id="login-btn">Log in</button>
     </form>
   </div>
+<?php if (db_demo_mode()): ?>
+  <div class="card" style="border-left:4px solid var(--color-accent)">
+    <strong>Demo</strong>
+    <p class="muted" style="font-size:14px;margin-top:8px">
+      Sample data only — anything you record here resets periodically.
+    </p>
+    <p style="font-size:14px;margin-top:8px">
+      Owner &nbsp;<code>0700000001</code> / <code>owner1234</code><br>
+      Worker &nbsp;<code>0700000002</code> / <code>worker1234</code>
+    </p>
+    <p class="muted" style="font-size:13px;margin-top:8px">
+      Log in as the worker to see costs and profit hidden from staff.
+    </p>
+  </div>
+<?php else: ?>
   <p class="center muted" style="font-size:13px">Forgot your password? Ask the owner to reset it.</p>
+<?php endif; ?>
 </div>
 <script src="/assets/js/app.js"></script>
 <script src="/assets/js/login.js"></script>

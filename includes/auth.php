@@ -112,6 +112,14 @@ function require_csrf(): void {
 
 // ---- Login rate limiting (§6.1): 5 attempts / 15 min / phone ----
 function login_rate_limited(string $phone): bool {
+    // The demo is a shared account that people mistype. Locking it for 15
+    // minutes after five attempts strands whoever is being shown the app, and
+    // blames their password for it. Brute-force protection is pointless here:
+    // the credentials are published on the login screen and the data is
+    // throwaway seed data.
+    if (db_demo_mode()) {
+        return false;
+    }
     $stmt = db()->prepare(
         'SELECT COUNT(*) FROM login_attempts
          WHERE phone = ? AND success = 0 AND attempted_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)'
