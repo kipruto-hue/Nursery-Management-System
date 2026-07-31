@@ -1,7 +1,5 @@
 <?php
-// STEP 0 SPIKE — temporary. Delete before any real deploy.
-// session_start() MUST come before any output, or it fails with "headers
-// already sent" and the persistence probe reports garbage.
+// Runtime capability probe. Temporary -- delete before handing over.
 session_start();
 $_SESSION['hits'] = ($_SESSION['hits'] ?? 0) + 1;
 
@@ -10,15 +8,29 @@ header('Cache-Control: no-store');
 
 echo "SPIKE OK\n";
 echo 'php_version=' . PHP_VERSION . "\n";
-echo 'sapi=' . PHP_SAPI . "\n";
-echo 'pdo_mysql=' . (extension_loaded('pdo_mysql') ? 'yes' : 'NO — PLAN IS DEAD') . "\n";
-echo 'session_save_path=' . (session_save_path() ?: '(default)') . "\n";
-echo 'tmp_writable=' . (is_writable(sys_get_temp_dir()) ? 'yes' : 'no') . "\n";
+echo 'pdo_mysql=' . (extension_loaded('pdo_mysql') ? 'yes' : 'no') . "\n";
 
-// Reuse the returned cookie across several requests. If session_hits climbs,
-// some instances are warm and keeping /tmp; if it keeps resetting to 1, file
-// sessions cannot back a login and Step 4's DB-backed handler is mandatory.
-echo 'session_id=' . session_id() . "\n";
+// Decides whether the no-database demo mode is possible at all.
+echo 'pdo_sqlite=' . (extension_loaded('pdo_sqlite') ? 'yes' : 'NO — DEMO MODE IMPOSSIBLE') . "\n";
+echo 'sqlite3_ext=' . (extension_loaded('sqlite3') ? 'yes' : 'no') . "\n";
+
+// Can we actually create and query a SQLite file in /tmp, and register the
+// custom functions the MySQL-compatibility shim depends on?
+try {
+    $f = sys_get_temp_dir() . '/probe.sqlite';
+    @unlink($f);
+    $p = new PDO('sqlite:' . $f);
+    $p->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $p->exec('CREATE TABLE t (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)');
+    $p->exec("INSERT INTO t (name) VALUES ('x')");
+    $p->sqliteCreateFunction('curdate', fn() => date('Y-m-d'), 0);
+    $n = $p->query("SELECT curdate()")->fetchColumn();
+    echo "sqlite_file_write=yes\n";
+    echo "sqlite_udf=yes (curdate returned $n)\n";
+    echo 'sqlite_rows=' . $p->query('SELECT COUNT(*) FROM t')->fetchColumn() . "\n";
+    @unlink($f);
+} catch (Throwable $e) {
+    echo 'sqlite_file_write=FAILED: ' . $e->getMessage() . "\n";
+}
+
 echo 'session_hits=' . $_SESSION['hits'] . "\n";
-// Distinguishes "same warm instance" from "new instance" across requests.
-echo 'boot_id=' . substr(md5((string)getmypid() . PHP_BINARY . (string)filemtime('/tmp')), 0, 8) . "\n";
